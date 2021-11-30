@@ -14,13 +14,12 @@
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/btn_sign_in"
-        android:layout_width="@dimen/_100sdp"
+        android:layout_width="@dimen/_85sdp"
         android:layout_height="@dimen/_35sdp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="@dimen/_52sdp"
         android:text="Text"
-        android:paddingStart="@dimen/_5sdp"
         android:textSize="@dimen/_18ssp">
 
     </com.google.android.gms.common.SignInButton>

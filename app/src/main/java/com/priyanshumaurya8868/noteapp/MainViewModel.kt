@@ -34,18 +34,19 @@ class MainViewModel : ViewModel() {
 
     private val _loadingState = MutableLiveData(LoadingState.IDLE)
     var loadingState: LiveData<LoadingState> = _loadingState
-    val storage = FirebaseStorage.getInstance().reference.child("pics")
+
+    var docID : String? = null
 
     fun addNote(note: Note, ref: CollectionReference) = viewModelScope.launch {
         try {
-          val temp =  ref.add(note).await()
-            temp.id
+          val docRef =  ref.add(note).await()
+              docID = docRef.id
         } catch (e: Exception) {
             _uiState.value = Event(e.localizedMessage ?: "Something went wring!")
         }
     }
 
-     fun updateNotes(list : List<Note>)= viewModelScope.launch{
+     fun updateListOfNotes(list : List<Note>)= viewModelScope.launch{
         _notes.postValue( list)
     }
 
@@ -93,6 +94,7 @@ class MainViewModel : ViewModel() {
                             newNote.toMap(),
                             SetOptions.merge()
                         ).await()
+                      docID =  doc.id
                     }
                 }else
                     _uiState.value = Event("No persons matched the query.")
@@ -106,31 +108,16 @@ class MainViewModel : ViewModel() {
       addNote(deletedNote!!,ref)
     }
 
-    fun uploadImg(uri : Uri, fileName : String) = viewModelScope.launch{
-       _loadingState.postValue(LoadingState.LOADING)
-        val storage = FirebaseStorage.getInstance().reference.child("pics")
-        val ref = storage.child(fileName)
-        try{
-           ref.putFile(uri).await()
-          val link = ref.downloadUrl.await()
-            _insertedImage.emit(link.toString())
-            Log.d("omegaRanger", "uploaded image $link" + "path ${link.path} => ref $ref")
-          _loadingState.postValue(LoadingState.LOADED)
-        }catch (e : Exception){
-            Log.d("OmegaRanger"," uploading Image ${ e.message.toString() }")
-            val msg = e.message?:"Couldn't upload image"
-           _loadingState.postValue(LoadingState.error(msg))
-            _uiState.emit(Event(msg))
-        }
 
-    }
 
     fun resetInsertedImageUri() = viewModelScope.launch{
         _insertedImage.emit("")
     }
 
-    fun setImage(image: String)= viewModelScope.launch{
-        _insertedImage.emit(image)
+
+
+    fun setImageUri(strUri: String) = viewModelScope.launch{
+        _insertedImage.emit(strUri)
     }
 
 }

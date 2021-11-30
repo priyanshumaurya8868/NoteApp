@@ -79,7 +79,7 @@ class Home : BaseFragment<FragmentHomeBinding>() {
                             R.id.action_global_editNotes,
                             bundle
                         )
-                        viewModel.resetInsertedImageUri()
+                        viewModel.setImageUri("")
                     }
                     btnDelete.setOnClickListener {
                         deleteNote(item)
@@ -102,7 +102,7 @@ class Home : BaseFragment<FragmentHomeBinding>() {
                         list.add(p)
                     }
                 }
-                viewModel.updateNotes(list)
+                viewModel.updateListOfNotes(list)
             }
             firebaseFirestoreException?.let {
                 Toast.makeText(requireContext(), it.message, Toast.LENGTH_LONG).show()

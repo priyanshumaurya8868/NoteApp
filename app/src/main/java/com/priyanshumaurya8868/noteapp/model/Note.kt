@@ -6,7 +6,7 @@ data class Note(
     val title : String = "",
     val content : String = "",
     val date : String = "",
-    val image : String = ""
+    val image : String =""
 ):Serializable{
     fun toMap() : Map<String, Any?>{
       val map = mutableMapOf<String, Any?>()

@@ -11,6 +11,9 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -18,10 +21,15 @@ import com.priyanshumaurya8868.noteapp.MainViewModel
 import com.priyanshumaurya8868.noteapp.databinding.FragmentCreateNotesBinding
 import com.priyanshumaurya8868.noteapp.model.Note
 import com.priyanshumaurya8868.noteapp.utils.BaseFragment
+import com.priyanshumaurya8868.noteapp.utils.Constant.KEY_DOC_ID
+import com.priyanshumaurya8868.noteapp.utils.Constant.KEY_INPUT_TASK
 import com.priyanshumaurya8868.noteapp.utils.LoadingState
+import com.priyanshumaurya8868.noteapp.utils.MyWorker
 import com.priyanshumaurya8868.noteapp.utils.load
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
@@ -29,8 +37,7 @@ import java.util.*
 class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
     private var canExit: Boolean = true
     lateinit var viewModel: MainViewModel
-    //TODO : if  a create a seperate instace of viewmodel then i would ned a work manger for uploading pics
-    // hence i have rest the value of insertedImage(inside viewModel) while navigate
+
     private var oldNote: Note? = null
     private val ref =
         Firebase.firestore.collection(FirebaseAuth.getInstance().currentUser?.displayName ?: "user")
@@ -76,7 +83,7 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
                     etContent.setText(note.content)
                     containerImg.isVisible = note.image.isNotBlank()
                     ivInsertedImg.load(note.image)
-                    viewModel.setImage(note.image)
+                    viewModel.setImageUri(note.image)
                 }
             }
 
@@ -107,7 +114,7 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
     private fun setUpListener() = binding.apply {
 
         btnDelInsertedImg.setOnClickListener {
-            viewModel.resetInsertedImageUri()
+            viewModel.setImageUri("")
             containerImg.isVisible = false
         }
 
@@ -119,8 +126,10 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
             findNavController().popBackStack()
         }
         btnSaveNote.setOnClickListener {
-            if (validateInputs())
-                navigate()
+            if (validateInputs()) {
+                saveNote()
+
+            }
         }
     }
 
@@ -134,12 +143,27 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
         }
     }
 
-    private fun navigate() {
+    private fun saveNote() = lifecycleScope.launch{
         val note = getUpdateNote()
-        if (oldNote == null)
+       val job = if (oldNote == null) {
             viewModel.addNote(note, ref)
-        else viewModel.updateNote(oldNote!!, note, ref)
-        findNavController().popBackStack()
+        } else {
+            viewModel.updateNote(oldNote!!, note, ref)
+        }
+
+        job.join()
+        val inputData = Data.Builder()
+            .putString(KEY_DOC_ID, viewModel.docID)
+            .putString(KEY_INPUT_TASK, note.image)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<MyWorker>()
+            .setInputData(inputData)
+            .build()
+
+        val workManager= WorkManager.getInstance(requireContext())
+        workManager .enqueue(request)
+        withContext(Dispatchers.Main){ findNavController().popBackStack() }
     }
 
     private fun getUpdateNote() = Note(
@@ -169,8 +193,10 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
                 val imagUri = it.data?.data
                 imagUri?.let { uri ->
                     setImagePreview(uri)
-                    viewModel.uploadImg(uri, "Img${UUID.randomUUID()}.jpg")
+//                    viewModel.uploadImg(uri, "Img${UUID.randomUUID()}.jpg")
+                    viewModel.setImageUri(uri.toString())
                 }
+
                 Log.d("omegaRanger", "Selected uri $imagUri?: mila nhi")
 
             } catch (e: Exception) {
@@ -181,6 +207,7 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
     private fun setImagePreview(uri: Uri) = binding.apply {
         containerImg.isVisible = true
         ivInsertedImg.load(uri.toString())
+
     }
 
 
