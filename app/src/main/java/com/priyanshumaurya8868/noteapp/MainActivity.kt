@@ -29,16 +29,7 @@ class MainActivity : AppCompatActivity() {
             navController.popBackStack()
             navController.navigate(R.id.action_global_login)
         }
-        temp()
- temp2()
-    }
 
-    fun temp(){
-        FirebaseDatabase.getInstance().reference.child("temp").setValue("FirebaseDatabase.getInstance()")
-    }
-
-    fun temp2(){
-        Firebase.database.reference.child("temp").setValue("FirebaseDatabase.getInstance()")
     }
 
 }

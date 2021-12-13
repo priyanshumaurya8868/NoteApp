@@ -31,7 +31,7 @@ class Home : BaseFragment<FragmentHomeBinding>() {
 
     private val ref =
         FirebaseDatabase.getInstance()
-            .getReference(FirebaseAuth.getInstance().currentUser?.displayName ?: "user")
+            .reference.child(FirebaseAuth.getInstance().currentUser?.displayName ?: "user")
 
     override fun getViewBinding(): FragmentHomeBinding = FragmentHomeBinding.inflate(layoutInflater)
 
