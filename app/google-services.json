@@ -1,41 +1,34 @@
 {
   "project_info": {
-    "project_number": "224829853101",
-    "project_id": "noteapp-fb4a8",
-    "storage_bucket": "noteapp-fb4a8.appspot.com"
+    "project_number": "47363564397",
+    "firebase_url": "https://noteapp-4ec9e-default-rtdb.firebaseio.com",
+    "project_id": "noteapp-4ec9e",
+    "storage_bucket": "noteapp-4ec9e.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:224829853101:android:45ba9d5835c0e9c2606524",
+        "mobilesdk_app_id": "1:47363564397:android:eb03ac2527fa3b99ceb064",
         "android_client_info": {
           "package_name": "com.priyanshumaurya8868.noteapp"
         }
       },
       "oauth_client": [
         {
-          "client_id": "224829853101-bv44bjputm7j7914ogks84pvr9l0r19c.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.priyanshumaurya8868.noteapp",
-            "certificate_hash": "a95d54d08142ea882a52ec6918fffe58e72eac4b"
-          }
-        },
-        {
-          "client_id": "224829853101-lm8ieg3elustdmbukbptlrv4fnv9rtmj.apps.googleusercontent.com",
+          "client_id": "47363564397-ippd8o9l0b8rju8270epcsreqr87qdse.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC_viuT8tHeUiMsv3mRXFTZ_56GZHm51hA"
+          "current_key": "AIzaSyDKD8NGJPv_XQYrrekgqzNbUdfubyVW_XI"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "224829853101-lm8ieg3elustdmbukbptlrv4fnv9rtmj.apps.googleusercontent.com",
+              "client_id": "47363564397-ippd8o9l0b8rju8270epcsreqr87qdse.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

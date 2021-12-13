@@ -1,14 +1,11 @@
 package com.priyanshumaurya8868.noteapp
 
-import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.FirebaseStorage
 import com.priyanshumaurya8868.noteapp.model.Note
 import com.priyanshumaurya8868.noteapp.utils.Event
 import com.priyanshumaurya8868.noteapp.utils.LoadingState
@@ -37,10 +34,10 @@ class MainViewModel : ViewModel() {
 
     var docID : String? = null
 
-    fun addNote(note: Note, ref: CollectionReference) = viewModelScope.launch {
+    fun addNote(note: Note, ref: DatabaseReference) = viewModelScope.launch {
         try {
-          val docRef =  ref.add(note).await()
-              docID = docRef.id
+          val docRef =  ref.child(note.id).setValue(note).await()
+              docID =   note.id
         } catch (e: Exception) {
             _uiState.value = Event(e.localizedMessage ?: "Something went wring!")
         }
@@ -50,23 +47,14 @@ class MainViewModel : ViewModel() {
         _notes.postValue( list)
     }
 
-    fun deleteNote(note: Note, ref: CollectionReference) = viewModelScope.launch {
+    fun deleteNote(note: Note, ref: DatabaseReference) = viewModelScope.launch {
         try {
-            val querySnapshot = ref
-                .whereEqualTo("title", note.title)
-                .whereEqualTo("content", note.content)
-                .whereEqualTo("image", note.image)
-                .get()
-                .await()
+            val querySnapshot = ref.child(note.id).get().await()
 
-            //personCollectionRef.document(document.id).update("age", newAge).await()
-
-            if (querySnapshot.documents.isNotEmpty()) {
+            if (querySnapshot.exists()) {
                 deletedNote = note
-                for (doc in querySnapshot) {
-                    ref.document(doc.id).delete().await() // del whole doc at once
-                    //del specific field
-//                       personsCollectionRef.document(doc.id).update(mapOf("firstName" to FieldValue.delete())).await()
+                for (doc in querySnapshot.children) {
+                    doc.ref.removeValue().await() // del whole doc at once
                 }
             } else
                 _uiState.value = Event("No persons matched the query.")
@@ -76,35 +64,18 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun updateNote(oldNote : Note, newNote: Note, ref: CollectionReference) =
+    fun updateNote(oldNote: Note, newNote: Note, ref: DatabaseReference) =
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val querySnapshot = ref
-                    .whereEqualTo("title", oldNote.title)
-                    .whereEqualTo("content", oldNote.content)
-                    .whereEqualTo("image", oldNote.image)
-                    .get()
-                    .await()
-
-                //personCollectionRef.document(document.id).update("age", newAge).await()
-
-                if (querySnapshot.documents.isNotEmpty()) {
-                    for (doc in querySnapshot) {
-                        ref.document(doc.id).set(
-                            newNote.toMap(),
-                            SetOptions.merge()
-                        ).await()
-                      docID =  doc.id
-                    }
-                }else
-                    _uiState.value = Event("No persons matched the query.")
+                        ref.child(oldNote.id).setValue(newNote.copyVal(oldNote.id)).await()
+                        docID = oldNote.id
 
             } catch (e: Exception) {
                 _uiState.value = Event(e.localizedMessage ?: "Something went wrong!")
             }
         }
 
-    fun undoDelteNote(ref: CollectionReference) {
+    fun undoDelteNote(ref: DatabaseReference) {
       addNote(deletedNote!!,ref)
     }
 

@@ -11,9 +11,11 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.firestore.ktx.toObject
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.getValue
 import com.priyanshumaurya8868.noteapp.MainViewModel
 import com.priyanshumaurya8868.noteapp.R
 import com.priyanshumaurya8868.noteapp.databinding.FragmentHomeBinding
@@ -28,7 +30,8 @@ class Home : BaseFragment<FragmentHomeBinding>() {
     private lateinit var viewModel: MainViewModel
 
     private val ref =
-        Firebase.firestore.collection(FirebaseAuth.getInstance().currentUser?.displayName ?: "user")
+        FirebaseDatabase.getInstance()
+            .getReference(FirebaseAuth.getInstance().currentUser?.displayName ?: "user")
 
     override fun getViewBinding(): FragmentHomeBinding = FragmentHomeBinding.inflate(layoutInflater)
 
@@ -46,7 +49,7 @@ class Home : BaseFragment<FragmentHomeBinding>() {
 
     private fun setUpViews() = binding.apply {
 
-   //user's dp
+        //user's dp
         FirebaseAuth.getInstance().currentUser?.photoUrl?.let {
             ivCurrentUser.load(it.toString())
         }
@@ -93,21 +96,24 @@ class Home : BaseFragment<FragmentHomeBinding>() {
 
 
     private fun subscribeRealtimeUpdates() {
-        ref.addSnapshotListener { querySnapshot, firebaseFirestoreException ->
-            querySnapshot?.let {
-                val list = mutableListOf<Note>()
-                for (doc in it.documents) {
-                    val p = doc.toObject<Note>()
-                    if (p != null) {
-                        list.add(p)
+        ref.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    val list = mutableListOf<Note>()
+                    for (noteSnapshot in snapshot.children) {
+                        val note = noteSnapshot.getValue<Note>()
+                        list.add(note!!)
                     }
+                    viewModel.updateListOfNotes(list)
                 }
-                viewModel.updateListOfNotes(list)
             }
-            firebaseFirestoreException?.let {
-                Toast.makeText(requireContext(), it.message, Toast.LENGTH_LONG).show()
+
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(requireContext(), error.message, Toast.LENGTH_LONG).show()
             }
-        }
+
+        })
+
 
     }
 
@@ -136,10 +142,10 @@ class Home : BaseFragment<FragmentHomeBinding>() {
             FirebaseAuth.getInstance().signOut()
             //google sign out
             googleSignInClient.signOut()
-        findNavController().apply {
-            popBackStack()
-            navigate(R.id.action_global_login)
-        }
+            findNavController().apply {
+                popBackStack()
+                navigate(R.id.action_global_login)
+            }
         }
     }
 }

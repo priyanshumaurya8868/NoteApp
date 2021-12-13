@@ -7,6 +7,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import com.priyanshumaurya8868.noteapp.databinding.ActivityMainBinding
 import com.priyanshumaurya8868.noteapp.utils.LoadingState
 
@@ -26,8 +29,16 @@ class MainActivity : AppCompatActivity() {
             navController.popBackStack()
             navController.navigate(R.id.action_global_login)
         }
-
+        temp()
+ temp2()
     }
 
+    fun temp(){
+        FirebaseDatabase.getInstance().reference.child("temp").setValue("FirebaseDatabase.getInstance()")
+    }
+
+    fun temp2(){
+        Firebase.database.reference.child("temp").setValue("FirebaseDatabase.getInstance()")
+    }
 
 }

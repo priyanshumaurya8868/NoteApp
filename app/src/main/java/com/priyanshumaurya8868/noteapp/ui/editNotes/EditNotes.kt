@@ -15,7 +15,8 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.priyanshumaurya8868.noteapp.MainViewModel
 import com.priyanshumaurya8868.noteapp.databinding.FragmentCreateNotesBinding
@@ -27,7 +28,6 @@ import com.priyanshumaurya8868.noteapp.utils.LoadingState
 import com.priyanshumaurya8868.noteapp.utils.MyWorker
 import com.priyanshumaurya8868.noteapp.utils.load
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,11 +39,12 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
     lateinit var viewModel: MainViewModel
 
     private var oldNote: Note? = null
-    private val ref =
-        Firebase.firestore.collection(FirebaseAuth.getInstance().currentUser?.displayName ?: "user")
+    private var ref =
+        FirebaseDatabase.getInstance().reference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ref= ref.child(FirebaseAuth.getInstance().currentUser?.displayName ?: "user")
         viewModel = ViewModelProvider(requireActivity()).get(MainViewModel::class.java)
     }
 
@@ -79,7 +80,7 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
             oldNote?.let { note ->
                 binding.apply {
                     etTitle.setText(note.title)
-                    tvDate.setText(note.date)
+                    tvDate.text = note.date
                     etContent.setText(note.content)
                     containerImg.isVisible = note.image.isNotBlank()
                     ivInsertedImg.load(note.image)
@@ -143,15 +144,16 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
         }
     }
 
-    private fun saveNote() = lifecycleScope.launch{
+    private fun saveNote() = lifecycleScope.launch {
+
         val note = getUpdateNote()
-       val job = if (oldNote == null) {
+        val job = if (oldNote == null) {
             viewModel.addNote(note, ref)
         } else {
             viewModel.updateNote(oldNote!!, note, ref)
         }
 
-        job.join()
+//        job.join()
         val inputData = Data.Builder()
             .putString(KEY_DOC_ID, viewModel.docID)
             .putString(KEY_INPUT_TASK, note.image)
@@ -161,12 +163,13 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
             .setInputData(inputData)
             .build()
 
-        val workManager= WorkManager.getInstance(requireContext())
-        workManager .enqueue(request)
-        withContext(Dispatchers.Main){ findNavController().popBackStack() }
+        val workManager = WorkManager.getInstance(requireContext())
+        workManager.enqueue(request)
+        withContext(Dispatchers.Main) { findNavController().popBackStack() }
     }
 
     private fun getUpdateNote() = Note(
+        id = UUID.randomUUID().toString(),
         title = binding.etTitle.text.toString(),
         content = binding.etContent.text.toString(),
         date = binding.tvDate.text.toString(),
@@ -193,7 +196,6 @@ class EditNotes : BaseFragment<FragmentCreateNotesBinding>() {
                 val imagUri = it.data?.data
                 imagUri?.let { uri ->
                     setImagePreview(uri)
-//                    viewModel.uploadImg(uri, "Img${UUID.randomUUID()}.jpg")
                     viewModel.setImageUri(uri.toString())
                 }
 

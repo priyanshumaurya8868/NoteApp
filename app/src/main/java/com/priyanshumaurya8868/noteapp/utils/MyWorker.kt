@@ -3,10 +3,12 @@ package com.priyanshumaurya8868.noteapp.utils
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.work.CoroutineWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -22,8 +24,8 @@ import java.util.*
 
 
 class MyWorker(context: Context, workerParameters: WorkerParameters) :
-    Worker(context, workerParameters) {
-    override fun doWork(): Result {
+    CoroutineWorker(context, workerParameters) {
+    override suspend fun doWork(): Result {
         val inData = inputData
         val strUri = inData.getString(KEY_INPUT_TASK)
         val docID = inData.getString(KEY_DOC_ID)
@@ -38,21 +40,19 @@ class MyWorker(context: Context, workerParameters: WorkerParameters) :
         return Result.success(outPutData)
     }
 
-    private fun updateNote(docId: String, downloadLink: String) =
-        CoroutineScope(Dispatchers.IO).launch {
-            val ref: CollectionReference = Firebase.firestore.collection(
+    private suspend fun updateNote(docId: String, downloadLink: String) {
+            val ref = FirebaseDatabase.getInstance().reference.child(
                 FirebaseAuth.getInstance().currentUser?.displayName ?: "user"
             )
             try {
-                ref.document(docId).update("image", downloadLink).await()
+                ref.child(docId).child("image").setValue(downloadLink).await()
 
             } catch (e: Exception) {
                 Log.d("omegaRanger", e.message ?: "work manger")
             }
         }
 
-    private fun uploadImg(uri: Uri, fileName: String, docId: String) =
-        CoroutineScope(Dispatchers.IO).launch {
+    private suspend fun uploadImg(uri: Uri, fileName: String, docId: String) {
             val storage = FirebaseStorage.getInstance().reference.child("pics")
             val ref = storage.child(fileName)
             try {
